@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ERP Gestión</title>
+<style>
+  :root {
+    --color-background-primary: #ffffff;
+    --color-background-secondary: #f5f5f3;
+    --color-background-tertiary: #eeede8;
+    --color-text-primary: #1a1a18;
+    --color-text-secondary: #6b6b67;
+    --color-text-tertiary: #9b9b96;
+    --color-border-tertiary: rgba(0,0,0,0.12);
+    --color-border-secondary: rgba(0,0,0,0.22);
+    --color-border-primary: rgba(0,0,0,0.32);
+    --border-radius-md: 8px;
+    --border-radius-lg: 12px;
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'SFMono-Regular', Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); background: #e8e7e2; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+
+  #erp-root { display: flex; height: 100vh; width: 100vw; background: var(--color-background-tertiary); overflow: hidden; }
+
+  /* SIDEBAR */
+  #sidebar { width: 230px; min-width: 230px; background: var(--color-background-primary); border-right: 0.5px solid var(--color-border-tertiary); display: flex; flex-direction: column; }
+  #sidebar-header { padding: 16px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .logo-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .logo-icon { width: 32px; height: 32px; border-radius: 8px; background: #1D9E75; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 600; font-size: 13px; flex-shrink: 0; }
+  .logo-name { font-weight: 600; font-size: 14px; color: var(--color-text-primary); }
+  .logo-sub { font-size: 10px; color: var(--color-text-tertiary); }
+  .empresa-activa-wrap { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 8px 10px; cursor: pointer; border: 0.5px solid var(--color-border-tertiary); transition: border-color 0.15s; }
+  .empresa-activa-wrap:hover { border-color: #1D9E75; }
+  .ea-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-tertiary); margin-bottom: 3px; }
+  .ea-nombre { font-size: 12px; font-weight: 500; color: var(--color-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ea-rut { font-size: 10px; color: var(--color-text-secondary); font-family: var(--font-mono); }
+  #sidebar-nav { flex: 1; overflow-y: auto; padding: 8px 0; }
+  .nav-section { padding: 12px 16px 4px; font-size: 10px; font-weight: 500; color: var(--color-text-tertiary); letter-spacing: 0.08em; text-transform: uppercase; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 16px; cursor: pointer; font-size: 13px; color: var(--color-text-secondary); border-left: 2px solid transparent; transition: background 0.1s; user-select: none; }
+  .nav-item:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+  .nav-item.active { background: #E1F5EE; color: #0F6E56; border-left-color: #1D9E75; font-weight: 500; }
+  .nav-item.has-sub.open { background: var(--color-background-secondary); color: var(--color-text-primary); }
+  .nav-icon { font-size: 14px; width: 16px; text-align: center; }
+  .nav-badge { margin-left: auto; background: #1D9E75; color: #fff; font-size: 10px; padding: 1px 6px; border-radius: 10px; }
+  .nav-arrow { margin-left: auto; font-size: 10px; color: var(--color-text-tertiary); transition: transform 0.2s; }
+  .nav-item.open .nav-arrow { transform: rotate(90deg); }
+  .subnav { overflow: hidden; max-height: 0; transition: max-height 0.25s ease; background: var(--color-background-secondary); }
+  .subnav.open { max-height: 200px; }
+  .subnav-item { display: flex; align-items: center; gap: 8px; padding: 6px 16px 6px 42px; cursor: pointer; font-size: 12px; color: var(--color-text-secondary); border-left: 2px solid transparent; transition: background 0.1s; }
+  .subnav-item:hover { background: var(--color-background-tertiary); color: var(--color-text-primary); }
+  .subnav-item.active { color: #0F6E56; border-left-color: #1D9E75; font-weight: 500; background: #E1F5EE; }
+  .subnav-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: 0.5; flex-shrink: 0; }
+  .subnav-item.active .subnav-dot { opacity: 1; }
+  #sidebar-footer { padding: 12px 16px; border-top: 0.5px solid var(--color-border-tertiary); display: flex; align-items: center; gap: 10px; }
+  .user-avatar { width: 30px; height: 30px; border-radius: 50%; background: #B5D4F4; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: #0C447C; flex-shrink: 0; }
+  .user-name { font-size: 12px; font-weight: 500; color: var(--color-text-primary); }
+  .user-role { font-size: 10px; color: var(--color-text-tertiary); }
+
+  /* MAIN */
+  #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  #topbar { height: 50px; background: var(--color-background-primary); border-bottom: 0.5px solid var(--color-border-tertiary); display: flex; align-items: center; padding: 0 24px; gap: 12px; }
+  #breadcrumb { font-size: 13px; color: var(--color-text-secondary); flex: 1; }
+  #breadcrumb .bc-mod { color: var(--color-text-secondary); }
+  #breadcrumb .bc-sub { color: var(--color-text-primary); font-weight: 500; }
+  .topbar-btn { padding: 6px 14px; font-size: 12px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: transparent; color: var(--color-text-secondary); cursor: pointer; transition: background 0.1s; }
+  .topbar-btn:hover { background: var(--color-background-secondary); }
+  .topbar-btn.primary { background: #1D9E75; color: #fff; border-color: #1D9E75; }
+  .topbar-btn.primary:hover { background: #0F6E56; }
+  #content-area { flex: 1; overflow-y: auto; padding: 24px; background: var(--color-background-tertiary); }
+
+  /* PANELS */
+  .panel { display: none; }
+  .panel.active { display: block; animation: fadeIn 0.15s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);} }
+  .panel-title { font-size: 18px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; }
+  .panel-sub { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 20px; }
+  .dte-tag { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 500; background: #E6F1FB; color: #185FA5; margin-left: 6px; }
+
+  /* CARDS */
+  .card { background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); padding: 18px; margin-bottom: 14px; }
+  .section-label { font-size: 10px; font-weight: 500; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+
+  /* STATS */
+  .stats-row { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin-bottom: 20px; }
+  .stat-card { background: var(--color-background-primary); border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-tertiary); padding: 14px 16px; }
+  .stat-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 6px; }
+  .stat-value { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+  .stat-delta { font-size: 11px; margin-top: 4px; color: #0F6E56; }
+  .stat-delta.neg { color: #993C1D; }
+
+  /* TABLES */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-size: 11px; font-weight: 500; color: var(--color-text-secondary); padding: 8px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  td { padding: 9px 8px; color: var(--color-text-primary); border-bottom: 0.5px solid var(--color-border-tertiary); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--color-background-secondary); }
+
+  /* BADGES */
+  .badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+  .badge-green { background: #E1F5EE; color: #0F6E56; }
+  .badge-amber { background: #FAEEDA; color: #854F0B; }
+  .badge-red { background: #FCEBEB; color: #993C1D; }
+  .badge-blue { background: #E6F1FB; color: #185FA5; }
+  .badge-gray { background: var(--color-background-secondary); color: var(--color-text-secondary); }
+
+  /* FORMS */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1/-1; }
+  .form-group label { font-size: 11px; color: var(--color-text-secondary); font-weight: 500; }
+  .form-group input, .form-group select, .form-group textarea {
+    font-size: 13px; padding: 8px 10px;
+    border: 0.5px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    background: var(--color-background-primary);
+    color: var(--color-text-primary); width: 100%;
+    text-transform: uppercase;
+    font-family: var(--font-sans);
+  }
+  .form-group input[type="date"], .form-group input[type="number"],
+  .form-group input[type="email"], .form-group input[type="url"],
+  .form-group input[type="month"] { text-transform: none; }
+  .form-group select { text-transform: none; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #1D9E75; }
+  .form-group input.filled { background: #E1F5EE; border-color: #5DCAA5; color: #085041; }
+  .form-group input.err { border-color: #D85A30; background: #FAECE7; }
+  .form-group textarea { resize: vertical; min-height: 60px; }
+
+  /* BUTTONS */
+  .btn { padding: 8px 16px; font-size: 13px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: transparent; color: var(--color-text-secondary); cursor: pointer; transition: background 0.1s; font-family: var(--font-sans); }
+  .btn:hover { background: var(--color-background-secondary); }
+  .btn-primary { background: #1D9E75; color: #fff; border-color: #1D9E75; }
+  .btn-primary:hover { background: #0F6E56; }
+  .btn-primary:disabled { background: var(--color-background-secondary); border-color: var(--color-border-secondary); color: var(--color-text-tertiary); cursor: not-allowed; }
+  .btn-danger { background: #FCEBEB; color: #993C1D; border-color: #F0997B; }
+  .btn-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; align-items: center; }
+  .add-line-btn { font-size: 12px; padding: 6px 14px; border: 0.5px dashed var(--color-border-secondary); background: transparent; border-radius: var(--border-radius-md); color: var(--color-text-secondary); cursor: pointer; font-family: var(--font-sans); }
+  .add-line-btn:hover { background: var(--color-background-secondary); }
+
+  /* TABS */
+  .tabs-bar { display: flex; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 0; }
+  .tab-btn { padding: 10px 20px; font-size: 13px; cursor: pointer; color: var(--color-text-secondary); border-bottom: 2px solid transparent; margin-bottom: -0.5px; background: none; border-top: none; border-left: none; border-right: none; font-family: var(--font-sans); transition: color 0.15s; }
+  .tab-btn:hover { color: var(--color-text-primary); }
+  .tab-btn.active { color: #0F6E56; border-bottom-color: #1D9E75; font-weight: 500; }
+  .tab-panel { display: none; padding-top: 18px; }
+  .tab-panel.active { display: block; animation: fadeIn 0.15s ease; }
+
+  /* DETALLE FACTURA */
+  .detalle-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 12px; }
+  .detalle-table th { text-align: left; font-size: 11px; font-weight: 500; color: var(--color-text-secondary); padding: 7px 6px; border-bottom: 0.5px solid var(--color-border-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
+  .detalle-table td { padding: 6px 4px; border-bottom: 0.5px solid var(--color-border-tertiary); vertical-align: middle; }
+  .detalle-table tr:last-child td { border-bottom: none; }
+  .detalle-table input { font-size: 12px; padding: 6px 8px; border: 0.5px solid var(--color-border-secondary); border-radius: 4px; background: var(--color-background-primary); color: var(--color-text-primary); width: 100%; text-transform: uppercase; font-family: var(--font-sans); }
+  .detalle-table input[type="number"] { text-transform: none; }
+  .detalle-table input:focus { outline: none; border-color: #1D9E75; }
+  .detalle-table input.sku-inp { font-family: var(--font-mono); font-size: 11px; background: var(--color-background-secondary); }
+  .td-total { text-align: right; font-weight: 500; color: var(--color-text-primary); padding-right: 6px; }
+  .del-btn { background: none; border: none; color: var(--color-text-tertiary); cursor: pointer; font-size: 14px; padding: 3px 7px; border-radius: 4px; }
+  .del-btn:hover { background: #FCEBEB; color: #993C1D; }
+  .totales { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; margin-top: 16px; }
+  .totales-row { display: flex; gap: 20px; font-size: 14px; }
+  .totales-row .lbl { color: var(--color-text-secondary); min-width: 100px; text-align: right; }
+  .totales-row .val { font-weight: 500; color: var(--color-text-primary); min-width: 120px; text-align: right; }
+  .totales-divider { width: 240px; height: 0.5px; background: var(--color-border-tertiary); margin: 4px 0; }
+  .totales-row.total-final .val { font-size: 18px; color: #0F6E56; }
+
+  /* PAGOS */
+  .pago-resumen { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
+  .pago-stat { border-radius: var(--border-radius-md); padding: 12px 14px; background: var(--color-background-secondary); }
+  .pago-stat .ps-label { font-size: 10px; color: var(--color-text-secondary); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .pago-stat .ps-val { font-size: 20px; font-weight: 500; color: var(--color-text-primary); }
+  .pago-stat.total-doc { background: #E6F1FB; } .pago-stat.total-doc .ps-val { color: #185FA5; }
+  .pago-stat.pagado { background: #E1F5EE; } .pago-stat.pagado .ps-val { color: #0F6E56; }
+  .pago-stat.saldo.por-cancelar { background: #FAEEDA; } .pago-stat.saldo.por-cancelar .ps-val { color: #854F0B; }
+  .pago-stat.saldo.cubierto { background: #E1F5EE; } .pago-stat.saldo.cubierto .ps-val { color: #0F6E56; }
+  .pago-stat.saldo.excedido { background: #FCEBEB; } .pago-stat.saldo.excedido .ps-val { color: #993C1D; }
+  .progress-bar-wrap { margin-bottom: 16px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--color-text-secondary); margin-bottom: 6px; }
+  .progress-bar { height: 6px; background: var(--color-background-secondary); border-radius: 10px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 10px; background: #1D9E75; transition: width 0.3s ease; }
+  .progress-fill.excedido { background: #D85A30; }
+  .pago-row { display: grid; grid-template-columns: 180px 1fr 130px 120px auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .pago-row:last-child { border-bottom: none; }
+  .pago-row select, .pago-row input { font-size: 12px; padding: 7px 9px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); width: 100%; font-family: var(--font-sans); }
+  .pago-row input[type="text"] { text-transform: uppercase; }
+  .pago-row input.error { border-color: #D85A30; background: #FAECE7; }
+  .del-pago-btn { background: none; border: 0.5px solid var(--color-border-secondary); color: var(--color-text-tertiary); cursor: pointer; font-size: 13px; padding: 6px 10px; border-radius: var(--border-radius-md); }
+  .del-pago-btn:hover { background: #FCEBEB; color: #993C1D; border-color: #F0997B; }
+  .pago-col-label { font-size: 10px; font-weight: 500; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.07em; }
+  .badge-cancelar { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; padding: 5px 12px; border-radius: var(--border-radius-md); background: #FAEEDA; color: #854F0B; border: 0.5px solid #FAC775; }
+  .badge-cancelar.hidden { display: none; }
+
+  /* CONTABILIZACIÓN */
+  .conta-resumen { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 16px; }
+  .cs { border-radius: var(--border-radius-md); padding: 12px 14px; }
+  .cs .cs-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-secondary); margin-bottom: 5px; }
+  .cs .cs-val { font-size: 17px; font-weight: 500; }
+  .cs-debe { background: #E6F1FB; } .cs-debe .cs-val { color: #185FA5; }
+  .cs-haber { background: #E1F5EE; } .cs-haber .cs-val { color: #0F6E56; }
+  .cs-dif { background: var(--color-background-secondary); }
+  .cs-dif.ok { background: #E1F5EE; } .cs-dif.ok .cs-val { color: #0F6E56; }
+  .cs-dif.err { background: #FCEBEB; } .cs-dif.err .cs-val { color: #993C1D; }
+  .cs-estado .estado-badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 4px 12px; border-radius: 8px; margin-top: 3px; }
+  .estado-badge.pendiente { background: #FAEEDA; color: #854F0B; }
+  .estado-badge.cuadrado { background: #E1F5EE; color: #0F6E56; }
+  .estado-badge.error { background: #FCEBEB; color: #993C1D; }
+  .estado-badge.contabilizado { background: #E6F1FB; color: #185FA5; }
+  .cuadre-bar-wrap { margin-bottom: 16px; }
+  .cuadre-bar { height: 5px; background: var(--color-background-secondary); border-radius: 10px; overflow: hidden; }
+  .cuadre-fill { height: 100%; border-radius: 10px; background: #1D9E75; transition: width 0.3s; }
+  .cuadre-fill.err { background: #D85A30; }
+  .asiento-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .asiento-table th { font-size: 10px; font-weight: 500; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.07em; padding: 7px 8px; border-bottom: 0.5px solid var(--color-border-tertiary); text-align: left; }
+  .asiento-table td { padding: 6px 6px; border-bottom: 0.5px solid var(--color-border-tertiary); vertical-align: middle; }
+  .asiento-table tbody tr:last-child td { border-bottom: none; }
+  .asiento-table tfoot td { border-top: 0.5px solid var(--color-border-tertiary); font-weight: 500; padding: 8px 6px; }
+  .row-auto td { background: var(--color-background-secondary); }
+  .asiento-table input, .asiento-table select { font-size: 12px; padding: 5px 7px; border: 0.5px solid var(--color-border-secondary); border-radius: 4px; background: var(--color-background-primary); color: var(--color-text-primary); width: 100%; font-family: var(--font-sans); }
+  .asiento-table input[type="text"] { text-transform: uppercase; }
+  .asiento-table input:focus { outline: none; border-color: #1D9E75; }
+  .asiento-table input[readonly] { background: var(--color-background-secondary); border-color: transparent; color: var(--color-text-secondary); cursor: default; }
+  .asiento-table select[disabled] { background: var(--color-background-secondary); border-color: transparent; cursor: default; }
+  .inp-monto { text-align: right !important; font-family: var(--font-mono) !important; }
+  .tf-val { text-align: right; font-family: var(--font-mono); font-size: 13px; }
+  .tf-val.col-debe { color: #185FA5; }
+  .tf-val.col-haber { color: #0F6E56; }
+  .del-row-btn { background: none; border: none; color: var(--color-text-tertiary); cursor: pointer; font-size: 13px; padding: 3px 7px; border-radius: 4px; }
+  .del-row-btn:hover { background: #FCEBEB; color: #993C1D; }
+  .badge-auto { display: inline-block; font-size: 9px; padding: 1px 6px; border-radius: 6px; background: #E6F1FB; color: #185FA5; margin-left: 3px; }
+  .alert { display: none; align-items: center; gap: 8px; font-size: 13px; border-radius: var(--border-radius-md); padding: 10px 16px; margin-top: 12px; }
+  .alert.visible { display: flex; }
+  .alert-ok { background: #E1F5EE; color: #0F6E56; border: 0.5px solid #5DCAA5; }
+  .alert-err { background: #FCEBEB; color: #993C1D; border: 0.5px solid #F0997B; }
+  .alert-warn { background: #FAEEDA; color: #854F0B; border: 0.5px solid #FAC775; }
+  .alert-info { background: #E6F1FB; color: #185FA5; border: 0.5px solid #85B7EB; }
+  .cuenta-wrap { position: relative; }
+  .cuenta-input-row { display: flex; gap: 0; }
+  .cuenta-cod { width: 85px; font-size: 11px; padding: 5px 7px; border: 0.5px solid var(--color-border-secondary); border-radius: 4px 0 0 4px; background: var(--color-background-primary); color: var(--color-text-primary); font-family: var(--font-mono); text-transform: uppercase; }
+  .cuenta-nombre-display { flex: 1; font-size: 11px; padding: 5px 7px; border: 0.5px solid var(--color-border-secondary); border-left: none; border-radius: 0 4px 4px 0; background: var(--color-background-secondary); color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; }
+  .cuenta-dropdown { position: fixed; background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); z-index: 500; max-height: 200px; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.12); display: none; min-width: 340px; }
+  .cuenta-dropdown.open { display: block; }
+  .cuenta-option { padding: 8px 12px; font-size: 12px; cursor: pointer; display: flex; gap: 12px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .cuenta-option:last-child { border-bottom: none; }
+  .cuenta-option:hover { background: #E1F5EE; }
+  .cuenta-option .co-cod { font-family: var(--font-mono); color: #185FA5; min-width: 75px; }
+  .cuenta-option .co-tipo { margin-left: auto; font-size: 10px; color: var(--color-text-tertiary); }
+  .cuenta-option.no-result { color: var(--color-text-tertiary); cursor: default; }
+  .cuenta-option.no-result:hover { background: none; }
+
+  /* EMPRESAS */
+  .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .search-input { flex: 1; min-width: 200px; font-size: 13px; padding: 8px 12px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); text-transform: uppercase; font-family: var(--font-sans); }
+  .search-input:focus { outline: none; border-color: #1D9E75; }
+  .filter-select { font-size: 13px; padding: 8px 10px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-secondary); cursor: pointer; font-family: var(--font-sans); }
+  .empresas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 14px; }
+  .empresa-card { background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); padding: 18px; cursor: pointer; transition: border-color 0.15s; position: relative; }
+  .empresa-card:hover { border-color: #5DCAA5; }
+  .empresa-card.activa-card { border-color: #1D9E75; border-width: 1.5px; }
+  .empresa-card.inactiva { opacity: 0.6; }
+  .ec-badge { position: absolute; top: 14px; right: 14px; font-size: 9px; font-weight: 500; padding: 2px 8px; border-radius: 8px; }
+  .ec-badge.en-uso { background: #E6F1FB; color: #185FA5; border: 0.5px solid #85B7EB; }
+  .ec-badge.activa { background: #E1F5EE; color: #0F6E56; border: 0.5px solid #5DCAA5; }
+  .ec-badge.inactiva-b { background: var(--color-background-secondary); color: var(--color-text-tertiary); }
+  .ec-avatar { width: 44px; height: 44px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 600; color: #fff; margin-bottom: 12px; }
+  .av-green { background: #1D9E75; } .av-blue { background: #378ADD; } .av-purple { background: #7F77DD; }
+  .av-coral { background: #D85A30; } .av-amber { background: #BA7517; } .av-teal { background: #0F6E56; }
+  .ec-nombre { font-size: 14px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ec-rut { font-size: 11px; color: var(--color-text-secondary); font-family: var(--font-mono); margin-bottom: 6px; }
+  .ec-giro { font-size: 11px; color: var(--color-text-tertiary); margin-bottom: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ec-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 0.5px solid var(--color-border-tertiary); }
+  .ec-actions { display: flex; gap: 5px; }
+  .ec-btn { padding: 5px 11px; font-size: 11px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: transparent; color: var(--color-text-secondary); cursor: pointer; font-family: var(--font-sans); }
+  .ec-btn:hover { background: var(--color-background-secondary); }
+  .ec-btn.usar { background: #1D9E75; color: #fff; border-color: #1D9E75; }
+  .ec-btn.usar:hover { background: #0F6E56; }
+  .ec-btn.usando { background: #E6F1FB; color: #185FA5; border-color: #85B7EB; cursor: default; }
+  .ec-btn.danger:hover { background: #FCEBEB; color: #993C1D; border-color: #F0997B; }
+  .ec-tipo { font-size: 10px; color: var(--color-text-tertiary); }
+
+  /* MODALS */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); align-items: flex-start; justify-content: center; z-index: 1000; padding-top: 50px; overflow-y: auto; }
+  .modal-overlay.visible { display: flex; }
+  .modal { background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); padding: 26px; width: 560px; max-width: 95vw; max-height: 85vh; overflow-y: auto; margin-bottom: 40px; }
+  .modal-sm { width: 380px; }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .modal-title { font-size: 16px; font-weight: 500; color: var(--color-text-primary); }
+  .modal-close { background: none; border: none; font-size: 20px; color: var(--color-text-tertiary); cursor: pointer; padding: 2px 7px; border-radius: 4px; }
+  .modal-close:hover { background: var(--color-background-secondary); }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 0.5px solid var(--color-border-tertiary); }
+  .modal-folio { font-size: 22px; font-weight: 500; color: #0F6E56; background: #E1F5EE; border-radius: var(--border-radius-md); padding: 10px 24px; display: inline-block; margin: 12px 0; }
+  .modal-track { font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 14px; }
+  .modal-pago-tabla { width: 100%; font-size: 13px; border-collapse: collapse; margin-bottom: 14px; }
+  .modal-pago-tabla td { padding: 7px 10px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .modal-pago-tabla td:last-child { text-align: right; font-weight: 500; }
+  .modal-pago-tabla tr:last-child td { border-bottom: none; }
+  .field-err { font-size: 11px; color: #993C1D; margin-top: 3px; display: none; }
+  .field-err.visible { display: block; }
+  .section-divider { grid-column: 1/-1; font-size: 10px; font-weight: 500; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.08em; padding-top: 10px; padding-bottom: 8px; border-bottom: 0.5px solid var(--color-border-tertiary); margin-top: 4px; }
+
+  /* RECEPTOR */
+  .rut-row { display: flex; gap: 8px; align-items: flex-end; }
+  .rut-row input { flex: 1; }
+  .rut-btn { padding: 8px 16px; font-size: 13px; border-radius: var(--border-radius-md); border: 0.5px solid #1D9E75; background: #1D9E75; color: #fff; cursor: pointer; white-space: nowrap; height: 39px; font-family: var(--font-sans); }
+  .rut-btn:disabled { background: var(--color-background-secondary); border-color: var(--color-border-secondary); color: var(--color-text-tertiary); cursor: not-allowed; }
+  .receptor-info { display: none; margin-top: 12px; background: #E1F5EE; border: 0.5px solid #5DCAA5; border-radius: var(--border-radius-md); padding: 12px 16px; }
+  .receptor-info.visible { display: block; }
+  .ri-name { font-size: 14px; font-weight: 500; color: #085041; margin-bottom: 5px; }
+  .ri-row { display: flex; gap: 20px; flex-wrap: wrap; }
+  .ri-item { font-size: 12px; color: #0F6E56; }
+  .ri-item span { font-weight: 500; }
+  .loading-msg { display: none; margin-top: 10px; font-size: 13px; color: #185FA5; align-items: center; gap: 8px; }
+  .loading-msg.visible { display: flex; }
+  .spinner { width: 14px; height: 14px; border: 2px solid #B5D4F4; border-top-color: #185FA5; border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 12px 18px; font-size: 13px; color: var(--color-text-primary); z-index: 2000; box-shadow: 0 4px 20px rgba(0,0,0,0.12); display: none; align-items: center; gap: 8px; font-family: var(--font-sans); }
+  .toast.visible { display: flex; }
+  .toast.ok { border-color: #5DCAA5; background: #E1F5EE; color: #0F6E56; }
+  .toast.err { border-color: #F0997B; background: #FCEBEB; color: #993C1D; }
+
+  /* LIBRO DIARIO */
+  .libro-view { display: none; }
+  .libro-view.visible { display: block; }
+  .libro-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .libro-table th { font-size: 11px; font-weight: 500; color: var(--color-text-tertiary); text-transform: uppercase; padding: 8px 10px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .libro-table th.num { text-align: right; }
+  .libro-table td { padding: 9px 10px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .libro-table td.num { text-align: right; font-family: var(--font-mono); }
+  .libro-table td.cod { font-family: var(--font-mono); font-size: 11px; color: #185FA5; }
+  .libro-table tfoot td { border-top: 0.5px solid var(--color-border-tertiary); font-weight: 500; padding: 9px 10px; }
+  .libro-stamp { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: var(--border-radius-md); background: #E6F1FB; color: #185FA5; border: 0.5px solid #85B7EB; margin-top: 16px; }
+</style>
+</head>
+<body>
+<div id="erp-root">
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div id="sidebar-header">
+      <div class="logo-row">
+        <div class="logo-icon">EG</div>
+        <div>
+          <div class="logo-name">ERP Gestión</div>
+          <div class="logo-sub">Multi-empresa · v2.0</div>
+        </div>
+      </div>
+      <div class="empresa-activa-wrap" onclick="showPanel('empresas')">
+        <div class="ea-label">Empresa activa</div>
+        <div class="ea-nombre" id="ea-nombre">TECH SOLUTIONS LTDA.</div>
+        <div class="ea-rut" id="ea-rut">76.123.456-7</div>
+      </div>
+    </div>
+    <div id="sidebar-nav">
+      <div class="nav-section">Principal</div>
+      <div class="nav-item active" data-panel="dashboard"><span class="nav-icon">◈</span> Dashboard</div>
+
+      <div class="nav-section">Administración</div>
+      <div class="nav-item" data-panel="empresas"><span class="nav-icon">◉</span> Empresas <span class="nav-badge" id="badge-empresas">3</span></div>
+      <div class="nav-item" data-panel="usuarios"><span class="nav-icon">◐</span> Usuarios</div>
+
+      <div class="nav-section">Finanzas</div>
+      <div class="nav-item has-sub" id="nav-ventas"><span class="nav-icon">◎</span> Ventas <span class="nav-arrow">▶</span></div>
+      <div class="subnav" id="subnav-ventas">
+        <div class="subnav-item active" data-panel="factura"><span class="subnav-dot"></span> Factura</div>
+        <div class="subnav-item" data-panel="boleta"><span class="subnav-dot"></span> Boleta</div>
+        <div class="subnav-item" data-panel="nota-credito"><span class="subnav-dot"></span> Nota de crédito</div>
+        <div class="subnav-item" data-panel="nota-debito"><span class="subnav-dot"></span> Nota de débito</div>
+      </div>
+      <div class="nav-item" data-panel="compras"><span class="nav-icon">◉</span> Compras</div>
+      <div class="nav-item" data-panel="contabilidad"><span class="nav-icon">▤</span> Contabilidad</div>
+
+      <div class="nav-section">Operaciones</div>
+      <div class="nav-item" data-panel="inventario"><span class="nav-icon">▦</span> Inventario</div>
+      <div class="nav-item" data-panel="produccion"><span class="nav-icon">⬡</span> Producción</div>
+
+      <div class="nav-section">RRHH</div>
+      <div class="nav-item" data-panel="empleados"><span class="nav-icon">◐</span> Empleados</div>
+      <div class="nav-item" data-panel="nomina"><span class="nav-icon">▣</span> Nómina</div>
+
+      <div class="nav-section">Sistema</div>
+      <div class="nav-item" data-panel="reportes"><span class="nav-icon">▥</span> Reportes</div>
+      <div class="nav-item" data-panel="configuracion"><span class="nav-icon">◧</span> Configuración</div>
+    </div>
+    <div id="sidebar-footer">
+      <div class="user-avatar">JM</div>
+      <div>
+        <div class="user-name">Juan Martínez</div>
+        <div class="user-role">Superadmin</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+    <div id="topbar">
+      <div id="breadcrumb">ERP Gestión &rsaquo; <span class="bc-mod" id="bc-mod">Finanzas</span> &rsaquo; <span class="bc-sub" id="bc-label">Factura</span></div>
+      <button class="topbar-btn" id="btn-exportar">Exportar</button>
+      <button class="topbar-btn primary" id="btn-accion">+ Nueva factura</button>
+    </div>
+    <div id="content-area">
+
+      <!-- DASHBOARD -->
+      <div class="panel" id="panel-dashboard">
+        <div class="panel-title">Resumen general</div>
+        <div class="panel-sub">Vista consolidada de la empresa activa</div>
+        <div class="stats-row">
+          <div class="stat-card"><div class="stat-label">Ventas del mes</div><div class="stat-value">$84.2M</div><div class="stat-delta">+8.4% vs mes anterior</div></div>
+          <div class="stat-card"><div class="stat-label">Órdenes activas</div><div class="stat-value">347</div><div class="stat-delta">+23 esta semana</div></div>
+          <div class="stat-card"><div class="stat-label">Productos en stock</div><div class="stat-value">1,204</div><div class="stat-delta neg">-3 bajo mínimo</div></div>
+          <div class="stat-card"><div class="stat-label">Empleados activos</div><div class="stat-value">89</div><div class="stat-delta">+2 este mes</div></div>
+        </div>
+        <div class="card">
+          <div class="section-label">Últimas transacciones</div>
+          <table>
+            <thead><tr><th>Fecha</th><th>Documento</th><th>Cliente</th><th>Monto</th><th>Estado</th></tr></thead>
+            <tbody>
+              <tr><td>25/03/2026</td><td>FAC-0842</td><td>TECH SOLUTIONS LTDA.</td><td>$2.340.000</td><td><span class="badge badge-green">Pagado</span></td></tr>
+              <tr><td>24/03/2026</td><td>FAC-0841</td><td>DISTRIBUIDORA NORTE</td><td>$890.500</td><td><span class="badge badge-amber">Pendiente</span></td></tr>
+              <tr><td>24/03/2026</td><td>OC-0319</td><td>PROVEEDORA SUR S.A.</td><td>$4.120.000</td><td><span class="badge badge-blue">En proceso</span></td></tr>
+              <tr><td>23/03/2026</td><td>FAC-0840</td><td>COMERCIAL ANDINA</td><td>$670.000</td><td><span class="badge badge-red">Vencido</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- FACTURA -->
+      <div class="panel active" id="panel-factura">
+        <div class="panel-title">Nueva factura electrónica <span class="dte-tag">DTE 33</span></div>
+        <div class="panel-sub">Complete receptor, detalle, contabilización y formas de pago · Enter avanza entre campos</div>
+
+        <div class="card">
+          <div class="section-label">Cabecera</div>
+          <div class="form-grid">
+            <div class="form-group"><label>Tipo DTE</label><select><option>Factura electrónica (33)</option><option>Factura no afecta (34)</option></select></div>
+            <div class="form-group"><label>Fecha emisión</label><input type="date" id="fecha-emision" /></div>
+            <div class="form-group"><label>Condición de pago</label><select><option>Contado</option><option>30 días</option><option>60 días</option><option>90 días</option></select></div>
+            <div class="form-group"><label>N° orden de compra</label><input type="text" placeholder="OC-2026-XXXX" /></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-label">Datos del receptor</div>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label>RUT receptor</label>
+            <div class="rut-row">
+              <input type="text" id="rut-input" placeholder="76.123.456-7" maxlength="12" style="text-transform:none;" />
+              <button class="rut-btn" id="btn-buscar" onclick="buscarRut()">Consultar SII</button>
+            </div>
+          </div>
+          <div class="loading-msg" id="loading-msg"><div class="spinner"></div> Consultando datos en el SII...</div>
+          <div class="receptor-info" id="receptor-info">
+            <div class="ri-name" id="ri-razon"></div>
+            <div class="ri-row">
+              <div class="ri-item">Giro: <span id="ri-giro"></span></div>
+              <div class="ri-item">Dirección: <span id="ri-dir"></span></div>
+              <div class="ri-item">Comuna: <span id="ri-comuna"></span></div>
+            </div>
+          </div>
+          <div class="form-grid" style="margin-top:14px;">
+            <div class="form-group"><label>Razón social</label><input type="text" id="razon-social" placeholder="AUTOCOMPLETA AL CONSULTAR RUT" /></div>
+            <div class="form-group"><label>Giro / actividad</label><input type="text" id="giro" placeholder="AUTOCOMPLETA AL CONSULTAR RUT" /></div>
+            <div class="form-group"><label>Dirección</label><input type="text" id="direccion" placeholder="AUTOCOMPLETA AL CONSULTAR RUT" /></div>
+            <div class="form-group"><label>Comuna</label><input type="text" id="comuna" placeholder="AUTOCOMPLETA AL CONSULTAR RUT" /></div>
+            <div class="form-group"><label>Ciudad</label><input type="text" id="ciudad" placeholder="SANTIAGO" /></div>
+            <div class="form-group"><label>Email receptor</label><input type="email" placeholder="contacto@empresa.cl" style="text-transform:none;" /></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="tabs-bar">
+            <button class="tab-btn active" onclick="switchTabFactura('detalle',this)">Detalle productos / servicios</button>
+            <button class="tab-btn" onclick="switchTabFactura('contabilizacion',this)">Contabilización</button>
+          </div>
+          <div class="tab-panel active" id="ftab-detalle">
+            <table class="detalle-table">
+              <thead><tr>
+                <th style="width:95px">SKU</th>
+                <th>Descripción</th>
+                <th style="width:60px">Cant.</th>
+                <th style="width:110px">Precio unit.</th>
+                <th style="width:70px">Dscto %</th>
+                <th style="width:110px;text-align:right">Total línea</th>
+                <th style="width:36px"></th>
+              </tr></thead>
+              <tbody id="lineas-body"></tbody>
+            </table>
+            <button class="add-line-btn" onclick="agregarLinea()">+ Agregar línea</button>
+            <div class="totales">
+              <div class="totales-row"><span class="lbl">Subtotal</span><span class="val" id="t-neto">$0</span></div>
+              <div class="totales-row"><span class="lbl">Descuentos</span><span class="val" id="t-dscto">$0</span></div>
+              <div class="totales-divider"></div>
+              <div class="totales-row"><span class="lbl">Neto</span><span class="val" id="t-neto2">$0</span></div>
+              <div class="totales-row"><span class="lbl">IVA (19%)</span><span class="val" id="t-iva">$0</span></div>
+              <div class="totales-divider"></div>
+              <div class="totales-row total-final"><span class="lbl">Total</span><span class="val" id="t-total">$0</span></div>
+            </div>
+          </div>
+          <div class="tab-panel" id="ftab-contabilizacion">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <label style="font-size:11px;color:var(--color-text-secondary);font-weight:500;">Centro de costo:</label>
+                <select id="cc-select" onchange="actualizarCCGlobal()" style="font-size:12px;padding:5px 9px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);">
+                  <option value="">— Sin asignar —</option><option>VENTAS</option><option>ADMINISTRACIÓN</option><option>OPERACIONES</option><option>BODEGA</option>
+                </select>
+                <label style="font-size:11px;color:var(--color-text-secondary);font-weight:500;margin-left:10px;">Período:</label>
+                <input type="month" id="periodo-conta" style="font-size:12px;padding:5px 9px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);width:140px;" />
+                <label style="font-size:11px;color:var(--color-text-secondary);font-weight:500;margin-left:6px;">N° asiento:</label>
+                <input type="text" id="nro-asiento" style="font-size:12px;padding:5px 9px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);width:110px;text-transform:uppercase;" placeholder="AST-0001" />
+              </div>
+              <div style="display:flex;gap:6px;">
+                <button class="btn" onclick="toggleLibro()" id="btn-libro" style="font-size:12px;padding:6px 12px;">Ver libro diario</button>
+                <button class="btn" onclick="generarAsientoAuto()" style="font-size:12px;padding:6px 12px;">↺ Regenerar</button>
+              </div>
+            </div>
+            <div class="conta-resumen">
+              <div class="cs cs-debe"><div class="cs-lbl">Total debe</div><div class="cs-val" id="cs-debe">$0</div></div>
+              <div class="cs cs-haber"><div class="cs-lbl">Total haber</div><div class="cs-val" id="cs-haber">$0</div></div>
+              <div class="cs cs-dif" id="cs-dif-card"><div class="cs-lbl">Diferencia</div><div class="cs-val" id="cs-dif">$0</div></div>
+              <div class="cs" style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 14px;"><div class="cs-lbl">Estado</div><div class="estado-badge pendiente" id="estado-badge">PENDIENTE</div></div>
+            </div>
+            <div class="cuadre-bar-wrap">
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--color-text-secondary);margin-bottom:5px;">
+                <span id="cuadre-pct-label">Cuadre: 0%</span><span id="cuadre-msg" style="font-weight:500;"></span>
+              </div>
+              <div class="cuadre-bar"><div class="cuadre-fill" id="cuadre-fill" style="width:0%"></div></div>
+            </div>
+            <div id="asiento-editable">
+              <div style="overflow-x:auto;">
+                <table class="asiento-table">
+                  <thead><tr>
+                    <th style="width:180px">Cuenta</th>
+                    <th style="width:110px">Centro costo</th>
+                    <th>Glosa</th>
+                    <th style="width:130px;text-align:right">Debe</th>
+                    <th style="width:130px;text-align:right">Haber</th>
+                    <th style="width:30px"></th>
+                  </tr></thead>
+                  <tbody id="asiento-body"></tbody>
+                  <tfoot><tr>
+                    <td colspan="3" style="font-size:12px;color:var(--color-text-secondary);">Totales</td>
+                    <td class="tf-val col-debe" id="foot-debe">$0</td>
+                    <td class="tf-val col-haber" id="foot-haber">$0</td>
+                    <td></td>
+                  </tr></tfoot>
+                </table>
+              </div>
+              <button class="add-line-btn" style="margin-top:10px;" onclick="agregarLineaManual()">+ Agregar línea manual</button>
+              <div class="alert alert-ok" id="alert-ok">✓ Asiento cuadrado — debe = haber. Listo para contabilizar.</div>
+              <div class="alert alert-err" id="alert-err">✗ Asiento descuadrado — la diferencia debe ser $0 antes de contabilizar.</div>
+              <div class="alert alert-warn" id="alert-warn">⚠ Ingrese al menos una línea con montos para poder contabilizar.</div>
+              <div class="alert alert-info" id="alert-contabilizado">✓ Asiento contabilizado correctamente en el Libro Diario.</div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;flex-wrap:wrap;gap:8px;">
+                <button class="btn btn-danger" onclick="limpiarAsiento()" style="font-size:12px;">Limpiar asiento</button>
+                <button class="btn btn-primary" id="btn-contabilizar" onclick="contabilizar()" disabled>Contabilizar asiento</button>
+              </div>
+            </div>
+            <div class="libro-view" id="libro-view">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;padding-bottom:14px;border-bottom:0.5px solid var(--color-border-tertiary);">
+                <div>
+                  <div style="font-size:15px;font-weight:500;color:var(--color-text-primary);" id="libro-titulo">LIBRO DIARIO</div>
+                  <div style="font-size:12px;color:var(--color-text-secondary);margin-top:3px;" id="libro-meta"></div>
+                </div>
+                <button class="btn" onclick="toggleLibro()" style="font-size:12px;">← Volver al asiento</button>
+              </div>
+              <table class="libro-table">
+                <thead><tr>
+                  <th style="width:90px">Código</th><th>Cuenta</th>
+                  <th style="width:110px">Centro costo</th><th>Glosa</th>
+                  <th class="num" style="width:130px">Debe</th>
+                  <th class="num" style="width:130px">Haber</th>
+                </tr></thead>
+                <tbody id="libro-body"></tbody>
+                <tfoot><tr>
+                  <td colspan="4" style="font-size:12px;color:var(--color-text-secondary);">Totales</td>
+                  <td class="num" id="libro-total-debe" style="color:#185FA5;font-family:var(--font-mono);font-weight:500;"></td>
+                  <td class="num" id="libro-total-haber" style="color:#0F6E56;font-family:var(--font-mono);font-weight:500;"></td>
+                </tr></tfoot>
+              </table>
+              <div id="libro-stamp" class="libro-stamp" style="display:none;">✓ Contabilizado · <span id="libro-stamp-date"></span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div class="section-label" style="margin-bottom:0;border:none;padding:0;">Formas de pago</div>
+            <div class="badge-cancelar hidden" id="badge-cancelar">⏳ Saldo por cancelar</div>
+          </div>
+          <div class="pago-resumen">
+            <div class="pago-stat total-doc"><div class="ps-label">Total documento</div><div class="ps-val" id="ps-total">$0</div></div>
+            <div class="pago-stat pagado"><div class="ps-label">Monto pagado</div><div class="ps-val" id="ps-pagado">$0</div></div>
+            <div class="pago-stat saldo" id="ps-saldo-card"><div class="ps-label" id="ps-saldo-label">Por cancelar</div><div class="ps-val" id="ps-saldo">$0</div></div>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-label"><span id="prog-pct-label">0% cubierto</span><span id="prog-estado-label" style="font-weight:500;"></span></div>
+            <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+          </div>
+          <div style="display:grid;grid-template-columns:180px 1fr 130px 120px auto;gap:10px;padding:0 0 8px;">
+            <div class="pago-col-label">Forma de pago</div><div class="pago-col-label">Referencia</div>
+            <div class="pago-col-label">Fecha pago</div><div class="pago-col-label">Monto</div><div></div>
+          </div>
+          <div id="pagos-body"></div>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:8px;">
+            <button class="add-line-btn" id="btn-add-pago" onclick="agregarPago()">+ Agregar forma de pago</button>
+            <span id="msg-max" style="display:none;font-size:12px;color:#854F0B;">Total cubierto</span>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <div class="badge-cancelar hidden" id="badge-cancelar2" style="margin-right:auto;">⏳ Se guardará con saldo por cancelar</div>
+          <button class="btn">Cancelar</button>
+          <button class="btn">Guardar borrador</button>
+          <button class="btn btn-primary" onclick="emitirFactura()">Emitir al SII</button>
+        </div>
+      </div>
+
+      <!-- EMPRESAS -->
+      <div class="panel" id="panel-empresas">
+        <div class="panel-title">Empresas</div>
+        <div class="panel-sub">Administración de empresas del sistema multi-empresa</div>
+        <div class="stats-row">
+          <div class="stat-card"><div class="stat-label">Total empresas</div><div class="stat-value" id="stat-total">0</div></div>
+          <div class="stat-card"><div class="stat-label">Activas</div><div class="stat-value" id="stat-activas" style="color:#0F6E56">0</div></div>
+          <div class="stat-card"><div class="stat-label">Inactivas</div><div class="stat-value" id="stat-inactivas" style="color:var(--color-text-tertiary)">0</div></div>
+          <div class="stat-card"><div class="stat-label">En uso</div><div class="stat-value" id="stat-uso" style="font-size:13px;margin-top:6px;color:#185FA5;">—</div></div>
+        </div>
+        <div class="toolbar">
+          <input type="text" class="search-input" id="search-empresa" placeholder="BUSCAR POR NOMBRE O RUT..." oninput="renderEmpresas()" />
+          <select class="filter-select" id="filter-estado" onchange="renderEmpresas()"><option value="">Todas</option><option value="activa">Activas</option><option value="inactiva">Inactivas</option></select>
+          <select class="filter-select" id="filter-tipo" onchange="renderEmpresas()"><option value="">Todos los tipos</option><option value="SPA">SpA</option><option value="LTDA">Ltda.</option><option value="SA">S.A.</option><option value="EIRL">E.I.R.L.</option><option value="OTRO">Otro</option></select>
+        </div>
+        <div class="empresas-grid" id="empresas-grid"></div>
+      </div>
+
+      <!-- MÓDULOS GENÉRICOS -->
+      <div class="panel" id="panel-boleta"><div class="panel-title">Boleta electrónica <span class="dte-tag">DTE 39</span></div><div class="card"><p style="color:var(--color-text-secondary);">Módulo de emisión de boletas electrónicas.</p></div></div>
+      <div class="panel" id="panel-nota-credito"><div class="panel-title">Nota de crédito <span class="dte-tag">DTE 61</span></div><div class="card"><p style="color:var(--color-text-secondary);">Emisión y gestión de notas de crédito.</p></div></div>
+      <div class="panel" id="panel-nota-debito"><div class="panel-title">Nota de débito <span class="dte-tag">DTE 56</span></div><div class="card"><p style="color:var(--color-text-secondary);">Emisión y gestión de notas de débito.</p></div></div>
+      <div class="panel" id="panel-compras"><div class="panel-title">Compras</div><div class="card"><p style="color:var(--color-text-secondary);">Órdenes de compra, proveedores y recepciones.</p></div></div>
+      <div class="panel" id="panel-contabilidad"><div class="panel-title">Contabilidad</div><div class="card"><p style="color:var(--color-text-secondary);">Plan de cuentas, diario y balance.</p></div></div>
+      <div class="panel" id="panel-inventario"><div class="panel-title">Inventario</div><div class="card"><p style="color:var(--color-text-secondary);">Control de stock y productos.</p></div></div>
+      <div class="panel" id="panel-produccion"><div class="panel-title">Producción</div><div class="card"><p style="color:var(--color-text-secondary);">Órdenes de producción.</p></div></div>
+      <div class="panel" id="panel-empleados"><div class="panel-title">Empleados</div><div class="card"><p style="color:var(--color-text-secondary);">Gestión de personal.</p></div></div>
+      <div class="panel" id="panel-nomina"><div class="panel-title">Nómina</div><div class="card"><p style="color:var(--color-text-secondary);">Liquidaciones y PREVIRED.</p></div></div>
+      <div class="panel" id="panel-reportes"><div class="panel-title">Reportes</div><div class="card"><p style="color:var(--color-text-secondary);">Reportes por módulo.</p></div></div>
+      <div class="panel" id="panel-configuracion"><div class="panel-title">Configuración</div><div class="card"><p style="color:var(--color-text-secondary);">Parámetros del sistema y conexión MySQL.</p></div></div>
+      <div class="panel" id="panel-usuarios"><div class="panel-title">Usuarios</div><div class="card"><p style="color:var(--color-text-secondary);">Gestión de usuarios y permisos.</p></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EMISIÓN -->
+<div class="modal-overlay" id="modal-exito">
+  <div class="modal modal-sm" style="text-align:center;">
+    <div style="font-size:36px;margin-bottom:12px;">✓</div>
+    <div style="font-size:16px;font-weight:500;color:var(--color-text-primary);margin-bottom:6px;">Factura emitida correctamente</div>
+    <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:10px;">Documento firmado, timbrado y enviado al SII.</div>
+    <div class="modal-folio" id="modal-folio"></div>
+    <div class="modal-track" id="modal-track"></div>
+    <table class="modal-pago-tabla" id="modal-pago-tabla"></table>
+    <div style="display:flex;gap:8px;justify-content:center;">
+      <button class="btn" onclick="document.getElementById('modal-exito').classList.remove('visible')">Cerrar</button>
+      <button class="btn btn-primary">Ver PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EMPRESA -->
+<div class="modal-overlay" id="modal-empresa">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-titulo">Nueva empresa</div>
+      <button class="modal-close" onclick="cerrarModal()">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="section-divider">Identificación</div>
+      <div class="form-group"><label>RUT empresa *</label><input type="text" id="f-rut" placeholder="76.123.456-7" style="text-transform:none;" /><div class="field-err" id="err-rut">RUT requerido</div></div>
+      <div class="form-group"><label>Tipo sociedad</label><select id="f-tipo"><option value="SPA">SpA</option><option value="LTDA">Ltda.</option><option value="SA">S.A.</option><option value="EIRL">E.I.R.L.</option><option value="OTRO">Otro</option></select></div>
+      <div class="form-group full"><label>Razón social *</label><input type="text" id="f-nombre" placeholder="NOMBRE LEGAL DE LA EMPRESA" /><div class="field-err" id="err-nombre">Razón social requerida</div></div>
+      <div class="form-group full"><label>Giro / actividad económica *</label><input type="text" id="f-giro" placeholder="GIRO COMERCIAL REGISTRADO EN SII" /><div class="field-err" id="err-giro">Giro requerido</div></div>
+      <div class="section-divider">Dirección</div>
+      <div class="form-group full"><label>Dirección</label><input type="text" id="f-direccion" placeholder="CALLE, NÚMERO, OFICINA" /></div>
+      <div class="form-group"><label>Comuna</label><input type="text" id="f-comuna" placeholder="COMUNA" /></div>
+      <div class="form-group"><label>Ciudad</label><input type="text" id="f-ciudad" placeholder="CIUDAD" /></div>
+      <div class="form-group"><label>Región</label><select id="f-region"><option>METROPOLITANA</option><option>VALPARAÍSO</option><option>BÍO BÍO</option><option>ARAUCANÍA</option><option>LOS LAGOS</option><option>MAULE</option><option>O'HIGGINS</option><option>COQUIMBO</option><option>ANTOFAGASTA</option><option>TARAPACÁ</option><option>ARICA Y PARINACOTA</option><option>LOS RÍOS</option><option>AYSÉN</option><option>MAGALLANES</option><option>ÑUBLE</option></select></div>
+      <div class="form-group"><label>Estado</label><select id="f-estado"><option value="activa">Activa</option><option value="inactiva">Inactiva</option></select></div>
+      <div class="section-divider">Contacto</div>
+      <div class="form-group"><label>Teléfono</label><input type="text" id="f-telefono" placeholder="+56 9 XXXX XXXX" style="text-transform:none;" /></div>
+      <div class="form-group"><label>Email</label><input type="email" id="f-email" placeholder="contacto@empresa.cl" /></div>
+      <div class="form-group full"><label>Sitio web</label><input type="url" id="f-web" placeholder="https://www.empresa.cl" /></div>
+      <div class="form-group full"><label>Observaciones</label><textarea id="f-obs" placeholder="NOTAS INTERNAS"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarEmpresa()">Guardar empresa</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMAR ELIMINAR -->
+<div class="modal-overlay" id="modal-confirmar">
+  <div class="modal modal-sm">
+    <div style="font-size:30px;margin-bottom:12px;">⚠</div>
+    <div style="font-size:15px;font-weight:500;color:var(--color-text-primary);margin-bottom:8px;">¿Eliminar empresa?</div>
+    <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:4px;" id="confirm-nombre-empresa"></div>
+    <div style="font-size:12px;color:var(--color-text-tertiary);margin-bottom:20px;">Esta acción no se puede deshacer.</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn" onclick="cerrarConfirmar()">Cancelar</button>
+      <button class="btn btn-danger" onclick="confirmarEliminar()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- DROPDOWN CUENTAS -->
+<div class="cuenta-dropdown" id="global-dropdown"></div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── PLAN DE CUENTAS ──────────────────────────────────────────────────────
+const planCuentas=[
+  {cod:'1101001',nombre:'CAJA GENERAL',tipo:'Activo'},
+  {cod:'1101002',nombre:'CAJA CHICA',tipo:'Activo'},
+  {cod:'1102001',nombre:'BANCO ESTADO CTA. CTE.',tipo:'Activo'},
+  {cod:'1102002',nombre:'BANCO BCI CTA. CTE.',tipo:'Activo'},
+  {cod:'1102003',nombre:'BANCO SANTANDER CTA. CTE.',tipo:'Activo'},
+  {cod:'1103001',nombre:'CLIENTES POR COBRAR',tipo:'Activo'},
+  {cod:'1103002',nombre:'DEUDORES VARIOS',tipo:'Activo'},
+  {cod:'1103003',nombre:'DOCUMENTOS POR COBRAR',tipo:'Activo'},
+  {cod:'1104001',nombre:'IVA CRÉDITO FISCAL',tipo:'Activo'},
+  {cod:'1104002',nombre:'PPM POR RECUPERAR',tipo:'Activo'},
+  {cod:'1105001',nombre:'EXISTENCIAS / INVENTARIO',tipo:'Activo'},
+  {cod:'2101001',nombre:'PROVEEDORES',tipo:'Pasivo'},
+  {cod:'2101002',nombre:'ACREEDORES VARIOS',tipo:'Pasivo'},
+  {cod:'2102001',nombre:'IVA DÉBITO FISCAL',tipo:'Pasivo'},
+  {cod:'2102002',nombre:'RETENCIONES POR PAGAR',tipo:'Pasivo'},
+  {cod:'2103001',nombre:'SUELDOS POR PAGAR',tipo:'Pasivo'},
+  {cod:'3101001',nombre:'CAPITAL PAGADO',tipo:'Patrimonio'},
+  {cod:'3102001',nombre:'UTILIDAD DEL EJERCICIO',tipo:'Patrimonio'},
+  {cod:'4101001',nombre:'VENTAS AFECTAS',tipo:'Ingreso'},
+  {cod:'4101002',nombre:'VENTAS EXENTAS',tipo:'Ingreso'},
+  {cod:'4103001',nombre:'OTROS INGRESOS',tipo:'Ingreso'},
+  {cod:'5101001',nombre:'COSTO DE VENTAS',tipo:'Costo'},
+  {cod:'5201001',nombre:'GASTOS DE ADMINISTRACIÓN',tipo:'Gasto'},
+  {cod:'5201002',nombre:'GASTOS DE VENTAS',tipo:'Gasto'},
+  {cod:'5201003',nombre:'SUELDOS Y REMUNERACIONES',tipo:'Gasto'},
+  {cod:'5201004',nombre:'ARRIENDOS',tipo:'Gasto'},
+  {cod:'5201005',nombre:'SERVICIOS BÁSICOS',tipo:'Gasto'},
+  {cod:'5201006',nombre:'GASTOS FINANCIEROS',tipo:'Gasto'},
+];
+
+// ── MOCK SII ─────────────────────────────────────────────────────────────
+const mockRuts={
+  '76123456-7':{razon:'TECH SOLUTIONS LTDA.',giro:'DESARROLLO DE SOFTWARE Y CONSULTORÍA TI',dir:'AV. PROVIDENCIA 1234, OF. 502',comuna:'PROVIDENCIA'},
+  '77654321-2':{razon:'DISTRIBUIDORA NORTE S.A.',giro:'COMERCIO AL POR MAYOR DE PRODUCTOS ALIMENTICIOS',dir:'LOS MILITARES 6190',comuna:'LAS CONDES'},
+  '76000123-k':{razon:'COMERCIAL ANDINA SPA',giro:'VENTA AL POR MENOR DE ARTÍCULOS DE FERRETERÍA',dir:'GRAN AVENIDA 3456',comuna:'SAN MIGUEL'},
+  '96929030-k':{razon:'FALABELLA RETAIL S.A.',giro:'COMERCIO AL POR MENOR EN TIENDAS POR DEPARTAMENTO',dir:'ROSARIO NORTE 615',comuna:'LAS CONDES'},
+};
+
+function fmtRut(r){return r.replace(/[^0-9kK]/g,'').toLowerCase();}
+function fmtCLP(n){return '$'+Math.round(Math.abs(n)).toLocaleString('es-CL');}
+
+let totalDoc=0,netoDoc=0,ivaDoc=0,lineaId=0,pagoId=0,asientoId=0,contabilizado=false;
+let activeCuentaInput=null;
+
+// ── MAYÚSCULAS GLOBALES ───────────────────────────────────────────────────
+document.addEventListener('input',function(e){
+  const el=e.target;
+  if(el.tagName!=='INPUT') return;
+  if(['email','url','date','number','password','month'].includes(el.type)) return;
+  if(['f-rut','f-telefono','f-web','f-email','rut-input'].includes(el.id)) return;
+  if(el.classList.contains('cuenta-cod')) return;
+  const pos=el.selectionStart;
+  el.value=el.value.toUpperCase();
+  try{el.setSelectionRange(pos,pos);}catch(x){}
+});
+
+// ── ENTER AVANZA ──────────────────────────────────────────────────────────
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Enter') return;
+  const el=e.target;
+  if(el.tagName==='BUTTON') return;
+  if(el.tagName==='TEXTAREA') return;
+  if(el.id==='rut-input'){e.preventDefault();buscarRut();return;}
+  if(el.classList.contains('cuenta-cod')){e.preventDefault();cerrarDropdown();return;}
+  if(el.tagName==='INPUT'||el.tagName==='SELECT'){
+    e.preventDefault();
+    const container=el.closest('.modal-overlay.visible')||document;
+    const all=Array.from(container.querySelectorAll('input:not([disabled]):not([readonly]):not([type="hidden"]),select:not([disabled]),textarea')).filter(x=>x.offsetParent!==null);
+    const idx=all.indexOf(el);
+    if(idx>=0&&idx<all.length-1) all[idx+1].focus();
+  }
+});
+
+// ── NAVEGACIÓN ────────────────────────────────────────────────────────────
+const navVentas=document.getElementById('nav-ventas');
+const subnavVentas=document.getElementById('subnav-ventas');
+navVentas.addEventListener('click',()=>{
+  const open=subnavVentas.classList.toggle('open');
+  navVentas.classList.toggle('open',open);
+});
+
+document.querySelectorAll('.subnav-item').forEach(item=>{
+  item.addEventListener('click',e=>{
+    e.stopPropagation();
+    document.querySelectorAll('.subnav-item').forEach(s=>s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    item.classList.add('active');
+    navVentas.classList.add('open');
+    subnavVentas.classList.add('open');
+    const p=item.dataset.panel;
+    const pan=document.getElementById('panel-'+p);
+    if(pan) pan.classList.add('active');
+    document.getElementById('bc-mod').textContent='Ventas';
+    const lbls={factura:'Factura',boleta:'Boleta','nota-credito':'Nota de crédito','nota-debito':'Nota de débito'};
+    document.getElementById('bc-label').textContent=lbls[p]||p;
+    const accion={factura:'+ Nueva factura',boleta:'+ Nueva boleta','nota-credito':'+ Nueva nota de crédito','nota-debito':'+ Nueva nota de débito'};
+    document.getElementById('btn-accion').textContent=accion[p]||'+ Nuevo';
+    document.getElementById('btn-accion').style.display='';
+    document.getElementById('btn-exportar').style.display='';
+  });
+});
+
+document.querySelectorAll('.nav-item:not(.has-sub)').forEach(item=>{
+  item.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.querySelectorAll('.subnav-item').forEach(s=>s.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    item.classList.add('active');
+    subnavVentas.classList.remove('open');
+    navVentas.classList.remove('open');
+    const p=item.dataset.panel;
+    const pan=document.getElementById('panel-'+p);
+    if(pan) pan.classList.add('active');
+    const mods={dashboard:'Dashboard',empresas:'Administración',usuarios:'Administración',compras:'Finanzas',contabilidad:'Finanzas',inventario:'Operaciones',produccion:'Operaciones',empleados:'RRHH',nomina:'RRHH',reportes:'Sistema',configuracion:'Sistema'};
+    document.getElementById('bc-mod').textContent=mods[p]||'ERP Gestión';
+    document.getElementById('bc-label').textContent=p.charAt(0).toUpperCase()+p.slice(1);
+    const esEmpresas=p==='empresas';
+    document.getElementById('btn-accion').textContent=esEmpresas?'+ Nueva empresa':'+ Nuevo';
+    document.getElementById('btn-accion').onclick=esEmpresas?abrirModal:null;
+    document.getElementById('btn-accion').style.display='';
+    document.getElementById('btn-exportar').style.display='';
+  });
+});
+
+function showPanel(p){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(pan=>pan.classList.remove('active'));
+  const navEl=document.querySelector(`.nav-item[data-panel="${p}"]`);
+  if(navEl) navEl.classList.add('active');
+  const panEl=document.getElementById('panel-'+p);
+  if(panEl) panEl.classList.add('active');
+}
+
+// ── RUT CONSULTA ──────────────────────────────────────────────────────────
+function buscarRut(){
+  const rut=fmtRut(document.getElementById('rut-input').value);
+  const load=document.getElementById('loading-msg'),info=document.getElementById('receptor-info');
+  info.classList.remove('visible');load.classList.add('visible');
+  document.getElementById('btn-buscar').disabled=true;
+  setTimeout(()=>{
+    load.classList.remove('visible');document.getElementById('btn-buscar').disabled=false;
+    const d=mockRuts[rut];
+    if(d){
+      document.getElementById('ri-razon').textContent=d.razon;
+      document.getElementById('ri-giro').textContent=d.giro;
+      document.getElementById('ri-dir').textContent=d.dir;
+      document.getElementById('ri-comuna').textContent=d.comuna;
+      info.classList.add('visible');
+      const fill=(id,v)=>{const el=document.getElementById(id);el.value=v;el.classList.add('filled');};
+      fill('razon-social',d.razon);fill('giro',d.giro);fill('direccion',d.dir);fill('comuna',d.comuna);
+      setTimeout(()=>document.getElementById('ciudad').focus(),100);
+    }
+  },1200);
+}
+
+// ── TABS FACTURA ──────────────────────────────────────────────────────────
+function switchTabFactura(name,btn){
+  document.querySelectorAll('#panel-factura .tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#panel-factura .tab-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('ftab-'+name).classList.add('active');
+  if(name==='contabilizacion') generarAsientoAuto();
+}
+
+// ── DETALLE LÍNEAS ────────────────────────────────────────────────────────
+function agregarLinea(){
+  lineaId++;const id=lineaId;
+  const tr=document.createElement('tr');tr.id='linea-'+id;
+  tr.innerHTML=`
+    <td style="width:95px"><input type="text" class="sku-inp" placeholder="SKU-001" style="width:100%;font-family:var(--font-mono);font-size:11px;"></td>
+    <td><input type="text" placeholder="DESCRIPCIÓN" style="width:100%" oninput="calcTotales()"></td>
+    <td><input type="number" value="1" min="0" style="width:100%" oninput="calcTotales()"></td>
+    <td><input type="number" placeholder="0" min="0" style="width:100%" oninput="calcTotales()"></td>
+    <td><input type="number" value="0" min="0" max="100" style="width:100%" oninput="calcTotales()"></td>
+    <td class="td-total" id="tl-${id}">$0</td>
+    <td><button class="del-btn" onclick="elimLinea(${id})">✕</button></td>`;
+  document.getElementById('lineas-body').appendChild(tr);
+  tr.querySelector('input').focus();calcTotales();
+}
+function elimLinea(id){document.getElementById('linea-'+id)?.remove();calcTotales();}
+function calcTotales(){
+  let sub=0,dsc=0;
+  document.querySelectorAll('#lineas-body tr').forEach(tr=>{
+    const i=tr.querySelectorAll('input');
+    const c=parseFloat(i[2].value)||0,p=parseFloat(i[3].value)||0,d=parseFloat(i[4].value)||0;
+    const br=c*p,ds=br*d/100,tot=br-ds;sub+=br;dsc+=ds;
+    const cel=document.getElementById('tl-'+tr.id.replace('linea-',''));
+    if(cel)cel.textContent=fmtCLP(tot);
+  });
+  const neto=sub-dsc,iva=neto*0.19,total=neto+iva;
+  netoDoc=Math.round(neto);ivaDoc=Math.round(iva);totalDoc=Math.round(total);
+  document.getElementById('t-neto').textContent=fmtCLP(sub);
+  document.getElementById('t-dscto').textContent=dsc>0?'-'+fmtCLP(dsc):'$0';
+  document.getElementById('t-neto2').textContent=fmtCLP(neto);
+  document.getElementById('t-iva').textContent=fmtCLP(iva);
+  document.getElementById('t-total').textContent=fmtCLP(total);
+  document.getElementById('ps-total').textContent=fmtCLP(totalDoc);
+  calcPagos();
+}
+
+// ── CONTABILIZACIÓN ───────────────────────────────────────────────────────
+function buscarCuentas(q){
+  q=q.toUpperCase().trim();
+  if(!q)return planCuentas.slice(0,8);
+  return planCuentas.filter(c=>c.cod.includes(q)||c.nombre.includes(q)||c.tipo.toUpperCase().includes(q)).slice(0,10);
+}
+function mostrarDropdown(inputEl,resultados){
+  const dd=document.getElementById('global-dropdown');
+  const rect=inputEl.getBoundingClientRect();
+  dd.style.top=(rect.bottom+window.scrollY+4)+'px';
+  dd.style.left=rect.left+'px';
+  if(!resultados.length){
+    dd.innerHTML='<div class="cuenta-option no-result">Sin resultados</div>';
+  }else{
+    dd.innerHTML=resultados.map(c=>`<div class="cuenta-option" onclick="seleccionarCuenta('${c.cod}','${c.nombre}')"><span class="co-cod">${c.cod}</span><span>${c.nombre}</span><span class="co-tipo">${c.tipo}</span></div>`).join('');
+  }
+  dd.classList.add('open');
+}
+function cerrarDropdown(){document.getElementById('global-dropdown').classList.remove('open');activeCuentaInput=null;}
+function seleccionarCuenta(cod,nombre){
+  if(!activeCuentaInput)return;
+  const row=activeCuentaInput.closest('tr');
+  const codInput=row.querySelector('.cuenta-cod');
+  const nombreEl=row.querySelector('.cuenta-nombre-display');
+  if(codInput)codInput.value=cod;
+  if(nombreEl)nombreEl.textContent=nombre;
+  cerrarDropdown();calcAsiento();
+  const glosa=row.querySelector('input[placeholder="GLOSA"]');
+  if(glosa)glosa.focus();
+}
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.cuenta-wrap')&&!e.target.closest('#global-dropdown'))cerrarDropdown();
+});
+
+function makeCuentaCell(cod,nombre,bloqueado){
+  const wrap=document.createElement('div');
+  wrap.className='cuenta-wrap';
+  if(bloqueado){
+    wrap.innerHTML=`<div style="display:flex;align-items:center;gap:6px;padding:4px 0;"><span style="font-family:var(--font-mono);font-size:11px;color:#185FA5;min-width:75px;">${cod}</span><span class="cuenta-nombre-display" style="font-size:11px;color:var(--color-text-secondary);">${nombre}</span><span class="badge-auto">AUTO</span></div>`;
+  }else{
+    wrap.innerHTML=`<div class="cuenta-input-row"><input type="text" class="cuenta-cod" value="${cod}" placeholder="CÓDIGO" maxlength="10" oninput="onCuentaCodInput(this)" onfocus="onCuentaFocus(this)" style="font-size:11px;padding:5px 7px;border:0.5px solid var(--color-border-secondary);border-radius:4px 0 0 4px;background:var(--color-background-primary);color:var(--color-text-primary);font-family:var(--font-mono);text-transform:uppercase;width:85px;"><div class="cuenta-nombre-display" style="flex:1;font-size:11px;padding:5px 8px;border:0.5px solid var(--color-border-secondary);border-left:none;border-radius:0 4px 4px 0;background:var(--color-background-secondary);color:var(--color-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;display:flex;align-items:center;">${nombre||'— buscar —'}</div></div>`;
+  }
+  return wrap;
+}
+function onCuentaFocus(input){activeCuentaInput=input;mostrarDropdown(input,buscarCuentas(input.value));}
+function onCuentaCodInput(input){
+  activeCuentaInput=input;
+  const q=input.value.toUpperCase();input.value=q;
+  mostrarDropdown(input,buscarCuentas(q));
+  const found=planCuentas.find(c=>c.cod===q);
+  const nombreEl=input.closest('.cuenta-wrap').querySelector('.cuenta-nombre-display');
+  if(found&&nombreEl)nombreEl.textContent=found.nombre;
+  else if(nombreEl&&q.length>0)nombreEl.textContent='— buscar —';
+  calcAsiento();
+}
+
+function generarAsientoAuto(){
+  if(contabilizado)return;
+  document.getElementById('asiento-body').innerHTML='';
+  asientoId=0;contabilizado=false;
+  ocultarAlertas();document.getElementById('alert-contabilizado').classList.remove('visible');
+  document.getElementById('btn-contabilizar').disabled=false;
+  if(totalDoc===0){calcAsiento();return;}
+  const cc=document.getElementById('cc-select').value||'—';
+  [{cod:'1103001',nombre:'CLIENTES POR COBRAR',glosa:'CLIENTES POR COBRAR',debe:totalDoc,haber:0,auto:true},
+   {cod:'4101001',nombre:'VENTAS AFECTAS',glosa:'VENTA NETA',debe:0,haber:netoDoc,auto:true},
+   {cod:'2102001',nombre:'IVA DÉBITO FISCAL',glosa:'IVA 19%',debe:0,haber:ivaDoc,auto:true}
+  ].forEach(l=>insertarFilaAsiento(l,cc));
+  calcAsiento();
+}
+
+function insertarFilaAsiento(data,cc){
+  asientoId++;const id=asientoId;
+  const tr=document.createElement('tr');tr.id='asi-'+id;
+  if(data.auto)tr.classList.add('row-auto');
+  const tdCuenta=document.createElement('td');
+  tdCuenta.appendChild(makeCuentaCell(data.cod,data.nombre,data.auto));
+  const ccOpts=['—','VENTAS','ADMINISTRACIÓN','OPERACIONES','BODEGA'].map(o=>`<option${(cc&&o===cc)||(!cc&&o==='—')?' selected':''}>${o}</option>`).join('');
+  tr.appendChild(tdCuenta);
+  tr.innerHTML+=`
+    <td><select style="font-size:12px;padding:5px 7px;border:0.5px solid var(--color-border-secondary);border-radius:4px;background:var(--color-background-primary);color:var(--color-text-primary);width:100%;" ${data.auto?'disabled':''} onchange="calcAsiento()">${ccOpts}</select></td>
+    <td><input type="text" placeholder="GLOSA" value="${data.glosa}" style="font-size:12px;padding:5px 7px;border:0.5px solid var(--color-border-secondary);border-radius:4px;background:var(--color-background-primary);color:var(--color-text-primary);width:100%;text-transform:uppercase;" ${data.auto?'readonly':''}></td>
+    <td><input type="number" class="inp-monto" min="0" placeholder="0" value="${data.debe||''}" oninput="calcAsiento()" style="font-size:12px;padding:5px 7px;border:0.5px solid var(--color-border-secondary);border-radius:4px;background:var(--color-background-primary);color:var(--color-text-primary);width:100%;text-align:right;font-family:var(--font-mono);" ${data.auto?'readonly':''}></td>
+    <td><input type="number" class="inp-monto" min="0" placeholder="0" value="${data.haber||''}" oninput="calcAsiento()" style="font-size:12px;padding:5px 7px;border:0.5px solid var(--color-border-secondary);border-radius:4px;background:var(--color-background-primary);color:var(--color-text-primary);width:100%;text-align:right;font-family:var(--font-mono);" ${data.auto?'readonly':''}></td>
+    <td style="text-align:center;">${data.auto?'<span style="font-size:12px;color:var(--color-text-tertiary);">🔒</span>':`<button class="del-row-btn" onclick="elimFila(${id})">✕</button>`}</td>`;
+  document.getElementById('asiento-body').appendChild(tr);
+}
+function agregarLineaManual(){
+  const cc=document.getElementById('cc-select').value||'—';
+  insertarFilaAsiento({cod:'',nombre:'',glosa:'',debe:0,haber:0,auto:false},cc);
+  const last=document.querySelector('#asiento-body tr:last-child .cuenta-cod');
+  if(last)last.focus();calcAsiento();
+}
+function elimFila(id){document.getElementById('asi-'+id)?.remove();calcAsiento();}
+function limpiarAsiento(){
+  if(!confirm('¿SEGURO QUE DESEA LIMPIAR EL ASIENTO?'))return;
+  document.getElementById('asiento-body').innerHTML='';
+  contabilizado=false;ocultarAlertas();calcAsiento();
+}
+function actualizarCCGlobal(){
+  const cc=document.getElementById('cc-select').value||'—';
+  document.querySelectorAll('#asiento-body select[disabled]').forEach(sel=>{
+    for(let opt of sel.options){if(opt.text===cc){opt.selected=true;break;}}
+  });
+}
+function ocultarAlertas(){['alert-ok','alert-err','alert-warn'].forEach(id=>document.getElementById(id).classList.remove('visible'));}
+function calcAsiento(){
+  let debe=0,haber=0;
+  document.querySelectorAll('#asiento-body tr').forEach(tr=>{
+    const inps=tr.querySelectorAll('input[type="number"]');
+    debe+=parseFloat(inps[0]?.value)||0;haber+=parseFloat(inps[1]?.value)||0;
+  });
+  debe=Math.round(debe);haber=Math.round(haber);
+  const dif=Math.abs(debe-haber);
+  const lineas=document.querySelectorAll('#asiento-body tr').length;
+  document.getElementById('cs-debe').textContent=fmtCLP(debe);
+  document.getElementById('cs-haber').textContent=fmtCLP(haber);
+  document.getElementById('foot-debe').textContent=fmtCLP(debe);
+  document.getElementById('foot-haber').textContent=fmtCLP(haber);
+  const difCard=document.getElementById('cs-dif-card');
+  const difEl=document.getElementById('cs-dif');
+  const badge=document.getElementById('estado-badge');
+  const fill=document.getElementById('cuadre-fill');
+  const pctLbl=document.getElementById('cuadre-pct-label');
+  const cuadrMsg=document.getElementById('cuadre-msg');
+  const btnC=document.getElementById('btn-contabilizar');
+  const maxVal=Math.max(debe,haber);
+  const pct=maxVal>0?Math.round((1-dif/maxVal)*100):0;
+  fill.style.width=Math.max(0,pct)+'%';
+  ocultarAlertas();
+  if(contabilizado){
+    difEl.textContent='CUADRADO';difCard.className='cs cs-dif ok';
+    badge.className='estado-badge contabilizado';badge.textContent='CONTABILIZADO';
+    fill.className='cuadre-fill';fill.style.width='100%';
+    pctLbl.textContent='Cuadre: 100%';cuadrMsg.textContent='✓ Contabilizado';cuadrMsg.style.color='#185FA5';
+    btnC.disabled=true;
+  }else if(lineas===0||debe===0){
+    difEl.textContent='$0';difCard.className='cs cs-dif';
+    badge.className='estado-badge pendiente';badge.textContent='PENDIENTE';
+    fill.className='cuadre-fill';fill.style.width='0%';
+    pctLbl.textContent='Cuadre: 0%';cuadrMsg.textContent='';
+    document.getElementById('alert-warn').classList.add('visible');btnC.disabled=true;
+  }else if(dif===0){
+    difEl.textContent='CUADRADO';difCard.className='cs cs-dif ok';
+    badge.className='estado-badge cuadrado';badge.textContent='CUADRADO';
+    fill.className='cuadre-fill';fill.style.width='100%';
+    pctLbl.textContent='Cuadre: 100%';cuadrMsg.textContent='✓ Listo para contabilizar';cuadrMsg.style.color='#0F6E56';
+    document.getElementById('alert-ok').classList.add('visible');btnC.disabled=false;
+  }else{
+    difEl.textContent=fmtCLP(dif);difCard.className='cs cs-dif err';
+    badge.className='estado-badge error';badge.textContent='DESCUADRADO';
+    fill.className='cuadre-fill err';fill.style.width=Math.max(0,pct)+'%';
+    pctLbl.textContent='Cuadre: '+Math.max(0,pct)+'%';
+    cuadrMsg.textContent='Diferencia: '+fmtCLP(dif);cuadrMsg.style.color='#993C1D';
+    document.getElementById('alert-err').classList.add('visible');btnC.disabled=true;
+  }
+}
+function contabilizar(){
+  contabilizado=true;
+  document.getElementById('alert-contabilizado').classList.add('visible');
+  ocultarAlertas();calcAsiento();
+  document.querySelectorAll('#asiento-body input:not([readonly]),#asiento-body select:not([disabled])').forEach(el=>{
+    el.setAttribute('readonly','');el.style.pointerEvents='none';
+  });
+}
+let libroVisible=false;
+function toggleLibro(){
+  libroVisible=!libroVisible;
+  document.getElementById('asiento-editable').style.display=libroVisible?'none':'';
+  const lv=document.getElementById('libro-view');
+  if(libroVisible){lv.classList.add('visible');renderLibro();document.getElementById('btn-libro').textContent='← Editar asiento';}
+  else{lv.classList.remove('visible');document.getElementById('btn-libro').textContent='Ver libro diario';}
+}
+function renderLibro(){
+  const nro=document.getElementById('nro-asiento').value||'AST-0001';
+  const per=document.getElementById('periodo-conta').value||'—';
+  document.getElementById('libro-titulo').textContent='LIBRO DIARIO — ASIENTO '+nro;
+  document.getElementById('libro-meta').textContent='Período: '+per+' · Fecha: '+new Date().toLocaleDateString('es-CL');
+  let debe=0,haber=0,html='';
+  document.querySelectorAll('#asiento-body tr').forEach(tr=>{
+    const codEl=tr.querySelector('.cuenta-cod');
+    const codSpan=tr.querySelector('.cuenta-wrap [style*="font-mono"]');
+    const nombreEl=tr.querySelector('.cuenta-nombre-display');
+    const inps=tr.querySelectorAll('input[type="number"]');
+    const cc=tr.querySelector('select')?.value||'—';
+    const glosa=tr.querySelector('input[placeholder="GLOSA"]')?.value||'—';
+    const d=parseFloat(inps[0]?.value)||0,h=parseFloat(inps[1]?.value)||0;
+    const cod=codEl?codEl.value:(codSpan?codSpan.textContent:'');
+    const nombre=nombreEl?nombreEl.textContent:'';
+    debe+=d;haber+=h;
+    html+=`<tr><td class="cod">${cod}</td><td>${nombre}</td><td style="font-size:11px;color:var(--color-text-secondary);">${cc}</td><td style="font-size:12px;">${glosa}</td><td class="num">${d>0?fmtCLP(d):''}</td><td class="num">${h>0?fmtCLP(h):''}</td></tr>`;
+  });
+  document.getElementById('libro-body').innerHTML=html||'<tr><td colspan="6" style="text-align:center;color:var(--color-text-tertiary);padding:20px;">Sin líneas</td></tr>';
+  document.getElementById('libro-total-debe').textContent=fmtCLP(debe);
+  document.getElementById('libro-total-haber').textContent=fmtCLP(haber);
+  const stamp=document.getElementById('libro-stamp');
+  if(contabilizado){stamp.style.display='inline-flex';document.getElementById('libro-stamp-date').textContent=new Date().toLocaleDateString('es-CL')+' '+new Date().toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});}
+  else stamp.style.display='none';
+}
+
+// ── PAGOS ─────────────────────────────────────────────────────────────────
+const medios=['Transferencia bancaria','Cheque','Efectivo','Tarjeta débito','Tarjeta crédito','Vale vista','Crédito cliente','Otro'];
+function agregarPago(){
+  pagoId++;const id=pagoId;
+  let pagado=0;
+  document.querySelectorAll('#pagos-body .pago-row').forEach(r=>{pagado+=parseFloat(r.querySelector('input[type="number"]')?.value)||0;});
+  const disponible=Math.max(0,totalDoc-Math.round(pagado));
+  const div=document.createElement('div');div.id='pago-'+id;div.className='pago-row';
+  div.innerHTML=`
+    <select>${medios.map(m=>`<option>${m}</option>`).join('')}</select>
+    <input type="text" placeholder="N° REFERENCIA">
+    <input type="date" value="${new Date().toISOString().split('T')[0]}">
+    <input type="number" id="mp-${id}" min="0" placeholder="0" value="${disponible||''}" oninput="calcPagos()">
+    <button class="del-pago-btn" onclick="elimPago(${id})">✕</button>`;
+  document.getElementById('pagos-body').appendChild(div);
+  div.querySelector('input[type="text"]').focus();calcPagos();
+}
+function elimPago(id){document.getElementById('pago-'+id)?.remove();calcPagos();}
+function calcPagos(){
+  let pagado=0;
+  document.querySelectorAll('#pagos-body .pago-row').forEach(r=>{pagado+=parseFloat(r.querySelector('input[type="number"]')?.value)||0;});
+  pagado=Math.round(pagado);
+  const saldo=totalDoc-pagado,excedido=pagado>totalDoc;
+  const pct=totalDoc>0?Math.min(100,Math.round(pagado/totalDoc*100)):0;
+  document.querySelectorAll('#pagos-body .pago-row').forEach(r=>{
+    const inp=r.querySelector('input[type="number"]');
+    if(excedido)inp.classList.add('error');else inp.classList.remove('error');
+  });
+  document.getElementById('ps-pagado').textContent=fmtCLP(pagado);
+  document.getElementById('ps-saldo').textContent=excedido?fmtCLP(pagado-totalDoc)+' excedido':fmtCLP(Math.abs(saldo));
+  document.getElementById('progress-fill').style.width=pct+'%';
+  document.getElementById('prog-pct-label').textContent=pct+'% cubierto';
+  const sc=document.getElementById('ps-saldo-card'),sl=document.getElementById('ps-saldo-label');
+  const pe=document.getElementById('prog-estado-label'),pf=document.getElementById('progress-fill');
+  const b1=document.getElementById('badge-cancelar'),b2=document.getElementById('badge-cancelar2');
+  const btnAdd=document.getElementById('btn-add-pago'),msgMax=document.getElementById('msg-max');
+  sc.className='pago-stat saldo';pf.className='progress-fill';
+  if(excedido){sc.classList.add('excedido');sl.textContent='MONTO EXCEDIDO';pe.textContent='Excede el total';pe.style.color='#993C1D';pf.classList.add('excedido');b1.classList.add('hidden');b2.classList.add('hidden');btnAdd.disabled=false;msgMax.style.display='none';}
+  else if(saldo<=0&&totalDoc>0){sc.classList.add('cubierto');sl.textContent='TOTALMENTE CUBIERTO';pe.textContent='✓ Pago completo';pe.style.color='#0F6E56';b1.classList.add('hidden');b2.classList.add('hidden');btnAdd.disabled=true;msgMax.style.display='inline';}
+  else if(pagado>0&&saldo>0){sc.classList.add('por-cancelar');sl.textContent='POR CANCELAR';pe.textContent='Saldo pendiente';pe.style.color='#854F0B';b1.classList.remove('hidden');b2.classList.remove('hidden');btnAdd.disabled=false;msgMax.style.display='none';}
+  else{sl.textContent='POR CANCELAR';pe.textContent='';b1.classList.add('hidden');b2.classList.add('hidden');btnAdd.disabled=false;msgMax.style.display='none';}
+}
+function emitirFactura(){
+  if(!document.getElementById('rut-input').value||!document.getElementById('razon-social').value){alert('CONSULTE Y COMPLETE LOS DATOS DEL RECEPTOR.');return;}
+  if(!document.querySelector('#lineas-body tr')){alert('AGREGUE AL MENOS UNA LÍNEA DE DETALLE.');return;}
+  let pagado=0;const filas=[];
+  document.querySelectorAll('#pagos-body .pago-row').forEach(r=>{
+    const sel=r.querySelector('select').value,m=parseFloat(r.querySelector('input[type="number"]').value)||0;
+    pagado+=m;if(m>0)filas.push({medio:sel,monto:m});
+  });
+  pagado=Math.round(pagado);
+  if(pagado>totalDoc){alert('EL MONTO PAGADO EXCEDE EL TOTAL. CORRIJA ANTES DE EMITIR.');return;}
+  const folio='FAC-0'+(843+Math.floor(Math.random()*10));
+  const track=Math.floor(40000000+Math.random()*9999999);
+  document.getElementById('modal-folio').textContent=folio;
+  document.getElementById('modal-track').textContent='Track ID SII: '+track;
+  const saldo=totalDoc-pagado;let html='';
+  filas.forEach(f=>{html+=`<tr><td>${f.medio}</td><td><span class="badge badge-green">Pagado</span></td><td>${fmtCLP(f.monto)}</td></tr>`;});
+  if(saldo>0)html+=`<tr><td>Saldo pendiente</td><td><span class="badge badge-amber">Por cancelar</span></td><td>${fmtCLP(saldo)}</td></tr>`;
+  html+=`<tr style="font-weight:500"><td>Total documento</td><td></td><td>${fmtCLP(totalDoc)}</td></tr>`;
+  document.getElementById('modal-pago-tabla').innerHTML=html;
+  document.getElementById('modal-exito').classList.add('visible');
+}
+
+// ── EMPRESAS CRUD ─────────────────────────────────────────────────────────
+const colores=['av-green','av-blue','av-purple','av-coral','av-amber','av-teal'];
+let empresas=[
+  {id:1,rut:'76.123.456-7',nombre:'TECH SOLUTIONS LTDA.',giro:'DESARROLLO DE SOFTWARE Y CONSULTORÍA TI',tipo:'LTDA',direccion:'AV. PROVIDENCIA 1234, OF. 502',comuna:'PROVIDENCIA',ciudad:'SANTIAGO',region:'METROPOLITANA',telefono:'+56 2 2345 6789',email:'contacto@techsolutions.cl',web:'https://www.techsolutions.cl',estado:'activa',obs:'',color:'av-green',enUso:true},
+  {id:2,rut:'77.654.321-2',nombre:'DISTRIBUIDORA NORTE S.A.',giro:'COMERCIO AL POR MAYOR DE PRODUCTOS ALIMENTICIOS',tipo:'SA',direccion:'LOS MILITARES 6190',comuna:'LAS CONDES',ciudad:'SANTIAGO',region:'METROPOLITANA',telefono:'+56 2 3456 7890',email:'info@distrinorte.cl',web:'',estado:'activa',obs:'PRIORIDAD ALTA',color:'av-blue',enUso:false},
+  {id:3,rut:'76.000.123-K',nombre:'COMERCIAL ANDINA SPA',giro:'VENTA AL POR MENOR DE ARTÍCULOS DE FERRETERÍA',tipo:'SPA',direccion:'GRAN AVENIDA 3456',comuna:'SAN MIGUEL',ciudad:'SANTIAGO',region:'METROPOLITANA',telefono:'',email:'andina@comercial.cl',web:'',estado:'inactiva',obs:'EN PROCESO DE CIERRE',color:'av-amber',enUso:false},
+];
+let nextId=4,editandoId=null,eliminandoId=null;
+
+function renderEmpresas(){
+  const q=(document.getElementById('search-empresa').value||'').toUpperCase();
+  const fe=document.getElementById('filter-estado').value;
+  const ft=document.getElementById('filter-tipo').value;
+  let lista=empresas.filter(e=>{
+    const mQ=!q||(e.nombre.includes(q)||e.rut.replace(/\./g,'').replace('-','').includes(q.replace(/\./g,'').replace('-','')));
+    const mE=!fe||e.estado===fe;const mT=!ft||e.tipo===ft;
+    return mQ&&mE&&mT;
+  });
+  const grid=document.getElementById('empresas-grid');
+  if(!lista.length){grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--color-text-tertiary);font-size:14px;">No se encontraron empresas</div>`;}
+  else{grid.innerHTML=lista.map(e=>cardHTML(e)).join('');}
+  document.getElementById('stat-total').textContent=empresas.length;
+  document.getElementById('stat-activas').textContent=empresas.filter(e=>e.estado==='activa').length;
+  document.getElementById('stat-inactivas').textContent=empresas.filter(e=>e.estado==='inactiva').length;
+  const enUso=empresas.find(e=>e.enUso);
+  document.getElementById('stat-uso').textContent=enUso?enUso.nombre.split(' ').slice(0,2).join(' '):'—';
+  document.getElementById('badge-empresas').textContent=empresas.length;
+}
+function cardHTML(e){
+  const iniciales=e.nombre.split(' ').filter(w=>w.length>2).slice(0,2).map(w=>w[0]).join('');
+  let badge=e.enUso?`<div class="ec-badge en-uso">EN USO</div>`:e.estado==='activa'?`<div class="ec-badge activa">Activa</div>`:`<div class="ec-badge inactiva-b">Inactiva</div>`;
+  const btnUsar=e.enUso?`<button class="ec-btn usando">✓ En uso</button>`:(e.estado==='activa'?`<button class="ec-btn usar" onclick="usarEmpresa(${e.id})">Usar</button>`:'');
+  return `<div class="empresa-card ${e.enUso?'activa-card':''} ${e.estado==='inactiva'?'inactiva':''}" ondblclick="editarEmpresa(${e.id})">
+    ${badge}
+    <div class="ec-avatar ${e.color}">${iniciales}</div>
+    <div class="ec-nombre" title="${e.nombre}">${e.nombre}</div>
+    <div class="ec-rut">${e.rut}</div>
+    <div class="ec-giro" title="${e.giro}">${e.giro}</div>
+    <div class="ec-footer">
+      <span class="ec-tipo">${e.tipo} · ${e.region.split(' ')[0]}</span>
+      <div class="ec-actions">
+        ${btnUsar}
+        <button class="ec-btn" onclick="editarEmpresa(${e.id})" title="Editar">✎</button>
+        <button class="ec-btn danger" onclick="pedirEliminar(${e.id})" title="Eliminar">✕</button>
+      </div>
+    </div>
+  </div>`;
+}
+function usarEmpresa(id){
+  empresas.forEach(e=>e.enUso=false);
+  const emp=empresas.find(e=>e.id===id);if(!emp)return;
+  emp.enUso=true;
+  document.getElementById('ea-nombre').textContent=emp.nombre;
+  document.getElementById('ea-rut').textContent=emp.rut;
+  renderEmpresas();toast('Empresa activa: '+emp.nombre.split(' ').slice(0,2).join(' '),'ok');
+}
+function abrirModal(empresa){
+  editandoId=empresa?empresa.id:null;
+  document.getElementById('modal-titulo').textContent=empresa?'Editar empresa':'Nueva empresa';
+  const f=(id,v='')=>{const el=document.getElementById(id);if(el)el.value=v;};
+  f('f-rut',empresa?.rut||'');f('f-nombre',empresa?.nombre||'');f('f-giro',empresa?.giro||'');
+  f('f-tipo',empresa?.tipo||'SPA');f('f-direccion',empresa?.direccion||'');f('f-comuna',empresa?.comuna||'');
+  f('f-ciudad',empresa?.ciudad||'SANTIAGO');f('f-region',empresa?.region||'METROPOLITANA');
+  f('f-telefono',empresa?.telefono||'');f('f-email',empresa?.email||'');f('f-web',empresa?.web||'');
+  f('f-estado',empresa?.estado||'activa');f('f-obs',empresa?.obs||'');
+  ['err-rut','err-nombre','err-giro'].forEach(id=>document.getElementById(id).classList.remove('visible'));
+  ['f-rut','f-nombre','f-giro'].forEach(id=>document.getElementById(id).classList.remove('err'));
+  document.getElementById('modal-empresa').classList.add('visible');
+  setTimeout(()=>document.getElementById('f-rut').focus(),100);
+}
+function editarEmpresa(id){const emp=empresas.find(e=>e.id===id);if(emp)abrirModal(emp);}
+function cerrarModal(){document.getElementById('modal-empresa').classList.remove('visible');editandoId=null;}
+function guardarEmpresa(){
+  const rut=document.getElementById('f-rut').value.trim();
+  const nombre=document.getElementById('f-nombre').value.trim();
+  const giro=document.getElementById('f-giro').value.trim();
+  let ok=true;
+  const valida=(id,errId,msg)=>{const el=document.getElementById(id);const val=el.value.trim();if(!val){el.classList.add('err');document.getElementById(errId).classList.add('visible');ok=false;}else{el.classList.remove('err');document.getElementById(errId).classList.remove('visible');}};
+  valida('f-rut','err-rut');valida('f-nombre','err-nombre');valida('f-giro','err-giro');
+  if(!ok)return;
+  const datos={rut,nombre,giro,tipo:document.getElementById('f-tipo').value,
+    direccion:document.getElementById('f-direccion').value.trim(),
+    comuna:document.getElementById('f-comuna').value.trim(),
+    ciudad:document.getElementById('f-ciudad').value.trim(),
+    region:document.getElementById('f-region').value,
+    telefono:document.getElementById('f-telefono').value.trim(),
+    email:document.getElementById('f-email').value.trim(),
+    web:document.getElementById('f-web').value.trim(),
+    estado:document.getElementById('f-estado').value,
+    obs:document.getElementById('f-obs').value.trim()};
+  if(editandoId){const idx=empresas.findIndex(e=>e.id===editandoId);if(idx>=0)empresas[idx]={...empresas[idx],...datos};toast('Empresa actualizada correctamente','ok');}
+  else{empresas.push({id:nextId++,...datos,color:colores[nextId%colores.length],enUso:false});toast('Empresa creada correctamente','ok');}
+  cerrarModal();renderEmpresas();
+}
+function pedirEliminar(id){
+  const emp=empresas.find(e=>e.id===id);if(!emp)return;
+  if(emp.enUso){toast('No se puede eliminar la empresa en uso','err');return;}
+  eliminandoId=id;
+  document.getElementById('confirm-nombre-empresa').textContent='Se eliminará: '+emp.nombre;
+  document.getElementById('modal-confirmar').classList.add('visible');
+}
+function cerrarConfirmar(){document.getElementById('modal-confirmar').classList.remove('visible');eliminandoId=null;}
+function confirmarEliminar(){empresas=empresas.filter(e=>e.id!==eliminandoId);cerrarConfirmar();renderEmpresas();toast('Empresa eliminada','ok');}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────
+function toast(msg,tipo){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className='toast '+tipo+' visible';
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('visible'),3000);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+document.getElementById('fecha-emision').value=new Date().toISOString().split('T')[0];
+document.getElementById('periodo-conta').value=new Date().toISOString().substring(0,7);
+document.getElementById('nro-asiento').value='AST-'+String(Math.floor(Math.random()*999)+1).padStart(4,'0');
+document.getElementById('btn-accion').onclick=null;
+// Abrir ventas/factura por defecto
+subnavVentas.classList.add('open');navVentas.classList.add('open');
+agregarLinea();calcPagos();calcAsiento();renderEmpresas();
+</script>
+</body>
+</html>
